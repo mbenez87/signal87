@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Bot, FileText, Shield, Zap, Brain, Lock, Search, TrendingUp } from 'lucide-react'
+import { Bot, FileText, Shield, Zap, Brain, Lock, Search, TrendingUp, Wand2 } from 'lucide-react'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -9,6 +9,11 @@ export default function Landing() {
       icon: Bot,
       title: 'Aria AI Assistant',
       description: 'Your intelligent agent that understands, organizes, and acts on your documents automatically.'
+    },
+    {
+      icon: Wand2,
+      title: 'Generation Dashboard',
+      description: 'Grok-style interface to search documents and generate comprehensive reports with AI.'
     },
     {
       icon: FileText,
@@ -36,11 +41,6 @@ export default function Landing() {
       description: 'Vector-powered search finds documents by meaning, not just keywords.'
     },
     {
-      icon: Zap,
-      title: 'Automated Workflows',
-      description: 'Let Aria handle organization, analysis, and document generation automatically.'
-    },
-    {
       icon: TrendingUp,
       title: 'Predictive Analytics',
       description: 'Budget forecasting, risk scoring, and trend analysis powered by AI.'
@@ -48,22 +48,22 @@ export default function Landing() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">S87</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                 Signal87 AI
               </span>
             </div>
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium"
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-blue-600/50 transition-all duration-200 font-medium"
             >
               Launch Platform
             </button>
@@ -74,27 +74,27 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
-          <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-8">
+          <div className="inline-flex items-center space-x-2 bg-zinc-800 border border-zinc-700 text-blue-400 px-4 py-2 rounded-full text-sm font-medium mb-8">
             <Bot className="w-4 h-4" />
             <span>Powered by Aria - Your AI Agent</span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 bg-clip-text text-transparent leading-tight">
             Enterprise Document Intelligence
             <br />
             Powered by AI
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
             Signal87 AI transforms how you manage, analyze, and act on documents. Meet Aria, your intelligent agent that operates throughout the entire platform, from analyzing contracts to applying digital signatures.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-lg font-semibold hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-lg font-semibold hover:shadow-xl hover:shadow-blue-600/50 transition-all duration-200 transform hover:-translate-y-0.5"
             >
               Start Free Trial
             </button>
             <button
-              className="px-8 py-4 bg-white text-gray-900 rounded-lg text-lg font-semibold border-2 border-gray-200 hover:border-blue-600 transition-all duration-200"
+              className="px-8 py-4 bg-zinc-800 text-white rounded-lg text-lg font-semibold border-2 border-zinc-700 hover:border-blue-600 transition-all duration-200"
             >
               Watch Demo
             </button>
@@ -105,20 +105,20 @@ export default function Landing() {
       {/* Features Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Powerful Capabilities</h2>
-          <p className="text-xl text-gray-600">Everything you need for intelligent document management</p>
+          <h2 className="text-4xl font-bold mb-4 text-white">Powerful Capabilities</h2>
+          <p className="text-xl text-gray-400">Everything you need for intelligent document management</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+              className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 hover:border-blue-600 hover:shadow-lg hover:shadow-blue-600/20 transition-all duration-200 hover:-translate-y-1"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mb-4">
                 <feature.icon className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600 text-sm">{feature.description}</p>
+              <h3 className="text-lg font-semibold mb-2 text-white">{feature.title}</h3>
+              <p className="text-gray-400 text-sm">{feature.description}</p>
             </div>
           ))}
         </div>
@@ -153,20 +153,20 @@ export default function Landing() {
 
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h2 className="text-4xl font-bold mb-6">Ready to transform your document workflow?</h2>
-        <p className="text-xl text-gray-600 mb-8">Join organizations using Signal87 AI for intelligent document management</p>
+        <h2 className="text-4xl font-bold mb-6 text-white">Ready to transform your document workflow?</h2>
+        <p className="text-xl text-gray-400 mb-8">Join organizations using Signal87 AI for intelligent document management</p>
         <button
           onClick={() => navigate('/dashboard')}
-          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-lg font-semibold hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-lg font-semibold hover:shadow-xl hover:shadow-blue-600/50 transition-all duration-200 transform hover:-translate-y-0.5"
         >
           Get Started Now
         </button>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-white">
+      <footer className="border-t border-zinc-800 bg-zinc-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600">
+          <div className="text-center text-gray-400">
             <p>&copy; 2024 Signal87 AI. All rights reserved.</p>
           </div>
         </div>
