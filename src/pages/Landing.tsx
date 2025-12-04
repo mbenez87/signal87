@@ -7,8 +7,8 @@ export default function Landing() {
   const features = [
     {
       icon: Bot,
-      title: 'Aria AI Assistant',
-      description: 'Your intelligent agent that understands, organizes, and acts on your documents automatically.'
+      title: 'Aria AI Orchestrator',
+      description: 'Your autonomous platform agent with full operational authority—executing tasks, managing workflows, and coordinating all platform capabilities.'
     },
     {
       icon: Wand2,
@@ -84,7 +84,7 @@ export default function Landing() {
             Powered by AI
           </h1>
           <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
-            Signal87 AI transforms how you manage, analyze, and act on documents. Meet Aria, your intelligent agent that operates throughout the entire platform, from analyzing contracts to applying digital signatures.
+            Signal87 AI transforms how you manage, analyze, and act on documents. Meet Aria, your autonomous platform orchestrator with full operational authority—executing actions, coordinating workflows, and managing every aspect of your document intelligence operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -131,7 +131,7 @@ export default function Landing() {
             <Bot className="w-16 h-16 mx-auto mb-6" />
             <h2 className="text-4xl font-bold mb-6">Meet Aria</h2>
             <p className="text-xl mb-8 max-w-3xl mx-auto opacity-90">
-              Aria isn't just a chatbot—she's your AI colleague. She can upload documents, organize folders, apply signatures, extract insights, generate reports, and perform any action you can do manually. Just ask, and Aria takes care of it.
+              Aria isn't a chatbot or assistant—she's your platform's operating system. With full operational authority and autonomous execution capabilities, Aria orchestrates all platform functions: document processing, report generation, signature application, compliance enforcement, and workflow automation. She doesn't suggest—she executes.
             </p>
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
@@ -139,8 +139,8 @@ export default function Landing() {
                 <p className="text-sm opacity-90">Access Aria from anywhere in the platform with a single click</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-                <h4 className="font-semibold mb-2">Action-Oriented</h4>
-                <p className="text-sm opacity-90">Aria doesn't just answer—she performs actions and completes tasks</p>
+                <h4 className="font-semibold mb-2">Autonomous Execution</h4>
+                <p className="text-sm opacity-90">Aria operates with full platform authority, executing operations directly with no hand-holding required</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
                 <h4 className="font-semibold mb-2">Context-Aware</h4>

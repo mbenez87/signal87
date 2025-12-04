@@ -9,7 +9,7 @@ export default function Dashboard() {
   const [chatMessages, setChatMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hi! I\'m Aria, your AI assistant. I can help you upload documents, organize files, search for information, apply signatures, and much more. What would you like to do?'
+      content: 'Hi! I\'m Aria, your AI platform orchestrator. I have full operational authority across all Signal87 capabilities—from document analysis and report generation to signature application and workflow automation. I don\'t just suggest actions, I execute them. What can I do for you?'
     }
   ])
   const [inputMessage, setInputMessage] = useState('')
@@ -84,7 +84,7 @@ export default function Dashboard() {
     setTimeout(() => {
       setChatMessages(prev => [...prev, {
         role: 'assistant',
-        content: `I understand you want to: "${inputMessage}". I can help with that! In a full implementation, I would process this request and perform the necessary actions across the platform.`
+        content: `Executing: "${inputMessage}". I'm processing your request and coordinating the necessary platform operations. In production, I would directly access the required APIs and complete this task autonomously.`
       }])
     }, 1000)
     setInputMessage('')
@@ -382,7 +382,7 @@ export default function Dashboard() {
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              Aria can perform actions, analyze documents, and help you throughout the platform
+              Aria operates with full platform authority—executing actions, orchestrating workflows, and managing operations autonomously
             </p>
           </div>
         </div>
