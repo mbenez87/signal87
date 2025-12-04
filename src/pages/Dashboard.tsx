@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [documents, setDocuments] = useState<Document[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([])
 
   // Load documents on mount and when upload completes
   useEffect(() => {
@@ -165,15 +166,22 @@ export default function Dashboard() {
     setGenerationResult('')
 
     try {
+      // Get context from selected documents
+      let documentContext = ''
+      if (selectedDocs.length > 0) {
+        documentContext = await documentService.getDocumentContext(selectedDocs)
+      }
+
       const response = await llmService.generate({
         prompt: generationPrompt,
+        context: documentContext,
         provider: selectedProvider
       })
 
       setGenerationResult(response.content)
     } catch (error) {
       console.error('Error generating:', error)
-      setGenerationResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your API configuration.`)
+      setGenerationResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your API configuration and ensure you have added the environment variables to Vercel.`)
     } finally {
       setIsLoading(false)
     }
@@ -276,6 +284,46 @@ export default function Dashboard() {
                   placeholder="What would you like to generate? e.g., 'Create a summary of all Q4 financial reports' or 'Generate a compliance report from vendor contracts'"
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] resize-none"
                 />
+
+                {/* Document Selector */}
+                {documents.length > 0 && (
+                  <div className="mt-4">
+                    <label className="text-sm font-medium text-gray-400 mb-2 block">
+                      Include Documents (optional):
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {documents.slice(0, 5).map(doc => (
+                        <button
+                          key={doc.id}
+                          onClick={() => {
+                            setSelectedDocs(prev =>
+                              prev.includes(doc.id)
+                                ? prev.filter(id => id !== doc.id)
+                                : [...prev, doc.id]
+                            )
+                          }}
+                          className={cn(
+                            'px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center space-x-2',
+                            selectedDocs.includes(doc.id)
+                              ? 'bg-blue-500/30 border-2 border-blue-500 text-blue-300'
+                              : 'bg-zinc-800 border border-zinc-700 text-gray-400 hover:border-zinc-600'
+                          )}
+                        >
+                          <FileText className="w-3 h-3" />
+                          <span>{doc.title}</span>
+                        </button>
+                      ))}
+                      {selectedDocs.length > 0 && (
+                        <button
+                          onClick={() => setSelectedDocs([])}
+                          className="px-3 py-2 rounded-lg text-xs font-medium bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 transition-all"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2 text-sm text-gray-400">
@@ -494,22 +542,46 @@ export default function Dashboard() {
       {ariaOpen && (
         <div className="fixed bottom-8 right-8 w-[480px] h-[600px] bg-zinc-900 rounded-2xl shadow-2xl flex flex-col z-50 border border-zinc-800">
           {/* Chat Header */}
-          <div className="p-4 border-b border-zinc-800 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <Bot className="w-6 h-6 text-white" />
+          <div className="p-4 border-b border-zinc-800 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <Bot className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Aria</h3>
+                  <p className="text-xs text-white/80">Your AI Assistant</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-white">Aria</h3>
-                <p className="text-xs text-white/80">Your AI Assistant</p>
-              </div>
+              <button
+                onClick={() => setAriaOpen(false)}
+                className="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
             </div>
-            <button
-              onClick={() => setAriaOpen(false)}
-              className="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
+
+            {/* AI Provider Selector */}
+            <div className="flex items-center justify-between bg-white/10 rounded-lg px-3 py-2">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-white" />
+                <span className="text-xs text-white/90">Powered by:</span>
+              </div>
+              <select
+                value={selectedProvider}
+                onChange={(e) => setSelectedProvider(e.target.value as AIProvider)}
+                className="bg-white/20 text-white text-xs rounded px-2 py-1 border-none outline-none cursor-pointer hover:bg-white/30 transition-colors"
+              >
+                {availableProviders.map(provider => (
+                  <option key={provider} value={provider} className="bg-zinc-800">
+                    {provider === 'openai' && '🤖 GPT-4'}
+                    {provider === 'grok' && '✨ Grok'}
+                    {provider === 'perplexity' && '🔍 Perplexity'}
+                    {provider === 'claude' && '🧠 Claude'}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Chat Messages */}
