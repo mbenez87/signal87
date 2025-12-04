@@ -1,20 +1,26 @@
 import { useState } from 'react'
 import { Bot, FileText, FolderOpen, Search, Upload, Settings, LogOut, Home,
-  Shield, BarChart3, X, Send, Sparkles, Paperclip, ChevronRight, Wand2
+  Shield, BarChart3, X, Send, Sparkles, Paperclip, ChevronRight, Wand2, Loader2
 } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { llmService } from '../services/llm'
+import { AIProvider } from '../types/ai'
 
 export default function Dashboard() {
   const [ariaOpen, setAriaOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState([
     {
-      role: 'assistant',
+      role: 'assistant' as const,
       content: 'Hi! I\'m Aria, your AI assistant. I can help you upload documents, organize files, search for information, apply signatures, and much more. What would you like to do?'
     }
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [activeTab, setActiveTab] = useState('generate')
   const [generationPrompt, setGenerationPrompt] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [generationResult, setGenerationResult] = useState('')
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(llmService.getProvider())
+  const [availableProviders] = useState<AIProvider[]>(llmService.getConfiguredProviders())
 
   const sidebarItems = [
     { id: 'home', icon: Home, label: 'Home' },
@@ -78,22 +84,60 @@ export default function Dashboard() {
     },
   ]
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return
-    setChatMessages(prev => [...prev, { role: 'user', content: inputMessage }])
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `I understand you want to: "${inputMessage}". I can help with that! In a full implementation, I would process this request and perform the necessary actions across the platform.`
-      }])
-    }, 1000)
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return
+
+    const userMessage = inputMessage
     setInputMessage('')
+    setChatMessages(prev => [...prev, { role: 'user' as const, content: userMessage }])
+    setIsLoading(true)
+
+    try {
+      const response = await llmService.chat({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are Aria, an intelligent AI assistant for Signal87 AI platform. You help users with document management, analysis, and insights. Be helpful, concise, and professional.'
+          },
+          ...chatMessages.map(m => ({ role: m.role, content: m.content })),
+          { role: 'user', content: userMessage }
+        ]
+      }, selectedProvider)
+
+      setChatMessages(prev => [...prev, {
+        role: 'assistant' as const,
+        content: response.content
+      }])
+    } catch (error) {
+      console.error('Error calling AI:', error)
+      setChatMessages(prev => [...prev, {
+        role: 'assistant' as const,
+        content: `I apologize, but I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your API configuration.`
+      }])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleGenerate = () => {
-    if (!generationPrompt.trim()) return
-    // In production, this would call your AI backend
-    console.log('Generating with prompt:', generationPrompt)
+  const handleGenerate = async () => {
+    if (!generationPrompt.trim() || isLoading) return
+
+    setIsLoading(true)
+    setGenerationResult('')
+
+    try {
+      const response = await llmService.generate({
+        prompt: generationPrompt,
+        provider: selectedProvider
+      })
+
+      setGenerationResult(response.content)
+    } catch (error) {
+      console.error('Error generating:', error)
+      setGenerationResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your API configuration.`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -189,19 +233,57 @@ export default function Dashboard() {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] resize-none"
                 />
                 <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center space-x-2 text-sm text-gray-400">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Powered by Aria AI</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 text-sm text-gray-400">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Powered by Aria AI</span>
+                    </div>
+                    {availableProviders.length > 0 && (
+                      <select
+                        value={selectedProvider}
+                        onChange={(e) => setSelectedProvider(e.target.value as AIProvider)}
+                        className="px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {availableProviders.map(provider => (
+                          <option key={provider} value={provider}>
+                            {provider.toUpperCase()}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <button
                     onClick={handleGenerate}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
+                    disabled={isLoading || !generationPrompt.trim()}
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Wand2 className="w-4 h-4" />
-                    <span>Generate</span>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4" />
+                        <span>Generate</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
+
+              {/* Generation Result */}
+              {generationResult && (
+                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Sparkles className="w-5 h-5 text-blue-400" />
+                    <h3 className="text-lg font-semibold text-white">Generated Result</h3>
+                  </div>
+                  <div className="prose prose-invert max-w-none">
+                    <p className="text-gray-300 whitespace-pre-wrap">{generationResult}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Suggested Prompts */}
               <div className="space-y-3">
@@ -358,6 +440,14 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-zinc-800 rounded-2xl px-4 py-3 flex items-center space-x-2">
+                  <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                  <p className="text-sm text-gray-400">Aria is thinking...</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input Area */}
@@ -376,9 +466,14 @@ export default function Dashboard() {
               />
               <button
                 onClick={handleSendMessage}
-                className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200"
+                disabled={isLoading || !inputMessage.trim()}
+                className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="w-5 h-5 text-white" />
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5 text-white" />
+                )}
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
