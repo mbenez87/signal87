@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bot, FileText, FolderOpen, Search, Upload, Settings, LogOut, Home,
-  Shield, BarChart3, X, Send, Sparkles, Paperclip, ChevronRight, Wand2
+  Shield, BarChart3, X, Send, Sparkles, Paperclip, ChevronRight, Wand2, Loader2
 } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { sendAriaCommand, checkAriaStatus, listFolders } from '../services/ariaApi'
 
 export default function Dashboard() {
   const [ariaOpen, setAriaOpen] = useState(false)
@@ -15,6 +16,9 @@ export default function Dashboard() {
   const [inputMessage, setInputMessage] = useState('')
   const [activeTab, setActiveTab] = useState('generate')
   const [generationPrompt, setGenerationPrompt] = useState('')
+  const [folders, setFolders] = useState([])
+  const [ariaStatus, setAriaStatus] = useState({ status: 'checking', online: false })
+  const [isSending, setIsSending] = useState(false)
 
   const sidebarItems = [
     { id: 'home', icon: Home, label: 'Home' },
@@ -26,6 +30,36 @@ export default function Dashboard() {
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ]
+
+  // Check Aria backend status on mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      const status = await checkAriaStatus()
+      setAriaStatus({
+        status: status.success ? 'operational' : 'offline',
+        online: status.success
+      })
+    }
+    checkStatus()
+  }, [])
+
+  // Load folders when folders tab is active
+  useEffect(() => {
+    if (activeTab === 'folders') {
+      loadFolders()
+    }
+  }, [activeTab])
+
+  const loadFolders = async () => {
+    try {
+      const response = await listFolders()
+      if (response.success) {
+        setFolders(response.folders)
+      }
+    } catch (error) {
+      console.error('Failed to load folders:', error)
+    }
+  }
 
   const mockDocuments = [
     {
@@ -78,16 +112,66 @@ export default function Dashboard() {
     },
   ]
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return
-    setChatMessages(prev => [...prev, { role: 'user', content: inputMessage }])
-    setTimeout(() => {
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isSending) return
+
+    const userMessage = inputMessage
+    setInputMessage('')
+    setIsSending(true)
+
+    // Add user message to chat
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
+
+    // Add loading indicator
+    const loadingId = Date.now()
+    setChatMessages(prev => [...prev, {
+      role: 'assistant',
+      content: '⏳ Processing your request...',
+      id: loadingId
+    }])
+
+    try {
+      // Send command to Aria backend
+      const response = await sendAriaCommand(userMessage)
+
+      // Remove loading message and add real response
+      setChatMessages(prev => prev.filter(msg => msg.id !== loadingId))
+
+      if (response.success && response.result) {
+        const result = response.result
+        let responseMessage = result.message || 'Command executed successfully'
+
+        // If folder was created, refresh folder list
+        if (result.action === 'create_folder' && result.success) {
+          loadFolders()
+        }
+
+        // If folders were listed, show them
+        if (result.action === 'list_folders' && result.folders) {
+          responseMessage += `\n\n${result.folders.map(f => `• ${f.name}`).join('\n')}`
+        }
+
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `✓ ${responseMessage}`
+        }])
+      } else {
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `❌ ${response.result?.error || 'Failed to execute command'}`
+        }])
+      }
+    } catch (error) {
+      // Remove loading message
+      setChatMessages(prev => prev.filter(msg => msg.id !== loadingId))
+
       setChatMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Executing: "${inputMessage}". I'm processing your request and coordinating the necessary platform operations. In production, I would directly access the required APIs and complete this task autonomously.`
+        content: `❌ Unable to connect to Aria backend. Please ensure the server is running on http://localhost:3001`
       }])
-    }, 1000)
-    setInputMessage('')
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleGenerate = () => {
@@ -272,6 +356,55 @@ export default function Dashboard() {
             </div>
           )}
 
+          {activeTab === 'folders' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Folders</h2>
+                  <p className="text-gray-400 mt-1">{folders.length} folder{folders.length !== 1 ? 's' : ''} total</p>
+                </div>
+                <button
+                  onClick={loadFolders}
+                  className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white hover:bg-zinc-700 transition-colors"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {folders.length === 0 ? (
+                <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-12 text-center">
+                  <FolderOpen className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-white mb-2">No folders yet</h3>
+                  <p className="text-gray-400 mb-6">Ask Aria to create a folder, or create one manually.</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                      onClick={() => setAriaOpen(true)}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
+                    >
+                      Ask Aria to Create Folder
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {folders.map((folder) => (
+                    <div
+                      key={folder.id}
+                      className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 hover:border-blue-600 transition-all cursor-pointer group"
+                    >
+                      <FolderOpen className="w-12 h-12 text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
+                      <h3 className="font-semibold text-white mb-1 truncate">{folder.name}</h3>
+                      <p className="text-xs text-gray-400">{folder.documentsCount} documents</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(folder.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'home' && (
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
@@ -310,7 +443,10 @@ export default function Dashboard() {
           className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-200 flex items-center justify-center group hover:scale-110 z-50"
         >
           <Bot className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black animate-pulse"></span>
+          <span className={cn(
+            "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black",
+            ariaStatus.online ? "bg-green-500 animate-pulse" : "bg-red-500"
+          )}></span>
         </button>
       )}
 
