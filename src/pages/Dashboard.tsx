@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bot, FileText, FolderOpen, Search, Upload, Settings, LogOut, Home,
-  Shield, BarChart3, X, Send, Sparkles, Paperclip, ChevronRight, Wand2, Loader2
+  Shield, BarChart3, X, Send, Sparkles, Paperclip, ChevronRight, Wand2, Loader2, Tag
 } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { llmService } from '../services/llm'
 import { AIProvider } from '../types/ai'
+import { documentService } from '../services/documentService'
+import { Document } from '../types/document'
+import DocumentUpload from '../components/DocumentUpload'
 
 export default function Dashboard() {
   const [ariaOpen, setAriaOpen] = useState(false)
@@ -21,6 +24,24 @@ export default function Dashboard() {
   const [generationResult, setGenerationResult] = useState('')
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>(llmService.getProvider())
   const [availableProviders] = useState<AIProvider[]>(llmService.getConfiguredProviders())
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Load documents on mount and when upload completes
+  useEffect(() => {
+    loadDocuments()
+  }, [])
+
+  const loadDocuments = () => {
+    const allDocs = documentService.getAllDocuments()
+    setDocuments(allDocs)
+  }
+
+  const handleDocumentUploadComplete = (document: Document) => {
+    loadDocuments()
+    setActiveTab('documents')
+  }
 
   const sidebarItems = [
     { id: 'home', icon: Home, label: 'Home' },
@@ -93,11 +114,29 @@ export default function Dashboard() {
     setIsLoading(true)
 
     try {
+      // Get document context if user mentions documents or asks document-related questions
+      let documentContext = ''
+      const allDocuments = documentService.getAllDocuments()
+
+      if (allDocuments.length > 0 && (
+        userMessage.toLowerCase().includes('document') ||
+        userMessage.toLowerCase().includes('file') ||
+        userMessage.toLowerCase().includes('upload') ||
+        userMessage.toLowerCase().includes('analyze') ||
+        userMessage.toLowerCase().includes('summary')
+      )) {
+        const recentDocs = allDocuments.slice(0, 5)
+        documentContext = `\n\nAvailable Documents (${allDocuments.length} total):\n` +
+          recentDocs.map(doc =>
+            `- ${doc.title} (${doc.category || 'N/A'}) - Tags: ${doc.tags.slice(0, 3).join(', ')}`
+          ).join('\n')
+      }
+
       const response = await llmService.chat({
         messages: [
           {
             role: 'system',
-            content: 'You are Aria, an intelligent AI assistant for Signal87 AI platform. You help users with document management, analysis, and insights. Be helpful, concise, and professional.'
+            content: `You are Aria, an intelligent AI assistant for Signal87 AI platform. You help users with document management, analysis, and insights. Be helpful, concise, and professional. You can help users upload documents, search for documents, analyze content, and extract insights.${documentContext}`
           },
           ...chatMessages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: userMessage }
@@ -200,11 +239,16 @@ export default function Dashboard() {
               <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search documents..."
                 className="pl-10 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg w-80 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-2">
+            <button
+              onClick={() => setUploadModalOpen(true)}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
+            >
               <Upload className="w-4 h-4" />
               <span>Upload</span>
             </button>
@@ -308,49 +352,99 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Documents View (Dropbox-style) */}
+          {/* Documents View with AI Tags */}
           {activeTab === 'documents' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-white">Recent Documents</h2>
-                <select className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>All Categories</option>
-                  <option>Financial</option>
-                  <option>Legal</option>
-                  <option>HR</option>
-                  <option>Technical</option>
-                </select>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Documents ({documents.length})</h2>
+                  <p className="text-sm text-gray-400 mt-1">AI-powered tagging and analysis</p>
+                </div>
+                <button
+                  onClick={() => setUploadModalOpen(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center space-x-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Upload Document</span>
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {mockDocuments.map(doc => (
-                  <div
-                    key={doc.id}
-                    className="group cursor-pointer"
+              {documents.length === 0 ? (
+                <div className="text-center py-16">
+                  <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">No documents yet</h3>
+                  <p className="text-gray-400 mb-6">Upload your first document to get started with AI-powered analysis</p>
+                  <button
+                    onClick={() => setUploadModalOpen(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all inline-flex items-center space-x-2"
                   >
-                    {/* Dropbox-style Thumbnail */}
-                    <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden hover:border-blue-600 transition-all duration-200 hover:shadow-lg hover:shadow-blue-600/20">
-                      <div className="aspect-[3/4] bg-zinc-800 relative overflow-hidden">
-                        <img
-                          src={doc.thumbnail}
-                          alt={doc.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-medium text-white text-sm truncate group-hover:text-blue-400 transition-colors">
-                          {doc.title}
-                        </h3>
-                        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                          <span>{doc.size}</span>
-                          <span>{doc.date}</span>
+                    <Upload className="w-4 h-4" />
+                    <span>Upload Document</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {documents
+                    .filter(doc =>
+                      searchQuery === '' ||
+                      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      doc.category?.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map(doc => (
+                      <div
+                        key={doc.id}
+                        className="bg-zinc-900 rounded-lg border border-zinc-800 p-4 hover:border-blue-600 transition-all hover:shadow-lg hover:shadow-blue-600/20 cursor-pointer"
+                      >
+                        <div className="flex items-start space-x-3 mb-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-white truncate">{doc.title}</h3>
+                            <p className="text-xs text-gray-500">{doc.filename}</p>
+                          </div>
+                        </div>
+
+                        {doc.summary && (
+                          <p className="text-sm text-gray-400 mb-3 line-clamp-2">{doc.summary}</p>
+                        )}
+
+                        {doc.category && (
+                          <div className="mb-2">
+                            <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-medium">
+                              {doc.category}
+                            </span>
+                          </div>
+                        )}
+
+                        {doc.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {doc.tags.slice(0, 3).map((tag, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs flex items-center space-x-1"
+                              >
+                                <Tag className="w-3 h-3" />
+                                <span>{tag}</span>
+                              </span>
+                            ))}
+                            {doc.tags.length > 3 && (
+                              <span className="px-2 py-1 bg-zinc-800 text-gray-400 rounded text-xs">
+                                +{doc.tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-zinc-800">
+                          <span>{doc.wordCount || 0} words</span>
+                          <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -361,8 +455,8 @@ export default function Dashboard() {
                   <h3 className="font-semibold text-white">Total Documents</h3>
                   <FileText className="w-5 h-5 text-blue-500" />
                 </div>
-                <p className="text-3xl font-bold text-white">1,247</p>
-                <p className="text-sm text-gray-400 mt-2">+23 this month</p>
+                <p className="text-3xl font-bold text-white">{documents.length}</p>
+                <p className="text-sm text-gray-400 mt-2">AI-powered analysis</p>
               </div>
               <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
                 <div className="flex items-center justify-between mb-4">
@@ -481,6 +575,14 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Document Upload Modal */}
+      {uploadModalOpen && (
+        <DocumentUpload
+          onUploadComplete={handleDocumentUploadComplete}
+          onClose={() => setUploadModalOpen(false)}
+        />
       )}
     </div>
   )
