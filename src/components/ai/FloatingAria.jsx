@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, Folder, Loader2 } from 'lucide-react';
+import { Bot, X, Send, Folder, Loader2, Globe } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { DocumentInMessage } from './DocumentInMessage';
 import base44 from '../../lib/base44Client';
 import { cn } from '../../utils/cn';
-import { Button, Input } from '../ui';
+import { Button, Input, Switch } from '../ui';
 
 export function FloatingAria({ className }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +12,7 @@ export function FloatingAria({ className }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDocs, setSelectedDocs] = useState([]);
+  const [useWebSearch, setUseWebSearch] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -103,23 +104,31 @@ export function FloatingAria({ className }) {
       } else {
         // Normal chat with ARIA
         console.log('[FloatingAria] Sending chat request to ARIA');
+        console.log('[FloatingAria] Web search enabled:', useWebSearch);
 
-        const response = await base44.functions.invoke('ariaChatWithCaching', {
+        // Use ariaChatWithAnthropic if web search is enabled (it supports it)
+        // Use ariaChatWithCaching for normal document-only queries
+        const functionName = useWebSearch ? 'ariaChatWithAnthropic' : 'ariaChatWithCaching';
+
+        const response = await base44.functions.invoke(functionName, {
           messages: newMessages.map(m => ({
             role: m.role,
             content: m.content
           })),
           user_email: null,
           user_id: null,
-          use_web_search: false
+          use_web_search: useWebSearch
         });
 
-        if (response.answer) {
+        // Handle response from either function
+        const answer = response.answer || response.content;
+
+        if (answer) {
           setMessages([
             ...newMessages,
             {
               role: 'assistant',
-              content: response.answer
+              content: answer
             }
           ]);
         } else {
@@ -241,12 +250,27 @@ export function FloatingAria({ className }) {
 
       {/* Input */}
       <div className="p-4 border-t border-zinc-800">
+        {/* Web Search Toggle */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2">
+            <Globe className={cn(
+              'w-4 h-4',
+              useWebSearch ? 'text-blue-400' : 'text-gray-500'
+            )} />
+            <span className="text-sm text-gray-300">Web Search</span>
+          </div>
+          <Switch
+            checked={useWebSearch}
+            onCheckedChange={setUseWebSearch}
+          />
+        </div>
+
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask ARIA anything..."
+            placeholder={useWebSearch ? "Search the web + docs..." : "Ask ARIA anything..."}
             disabled={isLoading}
             className="flex-1"
           />
