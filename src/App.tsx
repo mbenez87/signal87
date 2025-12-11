@@ -4,6 +4,7 @@ import { AuthProvider, WorkspaceProvider, UploadProvider } from './contexts'
 import { FloatingAria } from './components/ai'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
+import Upload from './pages/Upload'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -47,7 +48,7 @@ function App() {
                   <Route path="/" element={<Landing />} />
                   <Route path="/dashboard/*" element={<Dashboard />} />
                   <Route path="/documents" element={<PlaceholderPage title="Documents" />} />
-                  <Route path="/upload" element={<PlaceholderPage title="Upload" />} />
+                  <Route path="/upload" element={<Upload />} />
                   <Route path="/chat" element={<PlaceholderPage title="Chat" />} />
                   <Route path="/generate" element={<PlaceholderPage title="Generate" />} />
                   <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
