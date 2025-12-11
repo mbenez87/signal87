@@ -25,14 +25,23 @@ export const UploadProvider = ({ children }) => {
 
       // Step 1: Upload file to storage
       console.log('[UploadContext] Uploading file:', file.name);
+      console.log('[UploadContext] File details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      console.log('[UploadContext] UploadFile result:', uploadResult);
+
       const file_url = uploadResult?.file_url || uploadResult?.url;
 
       if (!file_url) {
-        throw new Error('No file URL returned from storage');
+        console.error('[UploadContext] No file_url in response:', uploadResult);
+        throw new Error('No file URL returned from storage. Check BASE44 UploadFile integration.');
       }
 
-      console.log('[UploadContext] File uploaded:', file_url);
+      console.log('[UploadContext] File uploaded to:', file_url);
 
       setStatus(prev => ({ ...prev, [id]: { state: 'creating_document', progress: 60 }}));
 
@@ -46,25 +55,46 @@ export const UploadProvider = ({ children }) => {
         folder_id: null
       };
 
-      console.log('[UploadContext] Upload payload:', uploadPayload);
+      console.log('[UploadContext] Calling upload function with payload:', uploadPayload);
 
       let response, data;
 
       try {
+        console.log('[UploadContext] Invoking upload function...');
         response = await base44.functions.invoke('upload', uploadPayload);
-        console.log('[UploadContext] Raw response:', response);
+        console.log('[UploadContext] Raw response:', JSON.stringify(response, null, 2));
 
         // Parse response - base44.functions.invoke returns { data: {...} } or direct data
         data = response?.data || response;
-        console.log('[UploadContext] Parsed data:', data);
+        console.log('[UploadContext] Parsed data:', JSON.stringify(data, null, 2));
 
         if (!data?.document?.id && !data?.success) {
           console.error('[UploadContext] Invalid response structure:', data);
-          throw new Error('Invalid response from upload function');
+          console.error('[UploadContext] Expected: { success: true, document: { id: ... } }');
+          throw new Error(`Invalid response from upload function. Got: ${JSON.stringify(data)}`);
         }
+
+        console.log('[UploadContext] Document created with ID:', data.document?.id);
       } catch (invokeError) {
         console.error('[UploadContext] Function invoke error:', invokeError);
-        throw new Error(`Upload function failed: ${invokeError.message || 'Unknown error'}`);
+        console.error('[UploadContext] Error details:', {
+          message: invokeError.message,
+          stack: invokeError.stack,
+          name: invokeError.name
+        });
+
+        // Provide helpful error messages based on common issues
+        let errorMessage = invokeError.message || 'Unknown error';
+
+        if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+          errorMessage = 'Upload function not found. Make sure "upload" function is deployed to BASE44.';
+        } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+          errorMessage = 'Authentication failed. Check your BASE44 credentials.';
+        } else if (errorMessage.includes('VITE_API_URL')) {
+          errorMessage = 'API URL not configured. Set VITE_API_URL in your .env file.';
+        }
+
+        throw new Error(errorMessage);
       }
 
       setStatus(prev => ({
