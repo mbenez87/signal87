@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [inputMessage, setInputMessage] = useState('')
   const [activeTab, setActiveTab] = useState('generate')
   const [generationPrompt, setGenerationPrompt] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const sidebarItems = [
     { id: 'home', icon: Home, label: 'Home' },
@@ -96,6 +97,17 @@ export default function Dashboard() {
     console.log('Generating with prompt:', generationPrompt)
   }
 
+  const trimmedQuery = searchQuery.trim().toLowerCase()
+  const filteredDocuments = mockDocuments.filter(doc => {
+    if (!trimmedQuery) return true
+    return [
+      doc.title,
+      doc.category,
+      doc.date,
+      doc.size,
+    ].some(value => value.toLowerCase().includes(trimmedQuery))
+  })
+
   return (
     <div className="min-h-screen bg-black flex">
       {/* Sidebar */}
@@ -157,6 +169,8 @@ export default function Dashboard() {
               <input
                 type="text"
                 placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-10 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg w-80 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -240,35 +254,42 @@ export default function Dashboard() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {mockDocuments.map(doc => (
-                  <div
-                    key={doc.id}
-                    className="group cursor-pointer"
-                  >
-                    {/* Dropbox-style Thumbnail */}
-                    <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden hover:border-blue-600 transition-all duration-200 hover:shadow-lg hover:shadow-blue-600/20">
-                      <div className="aspect-[3/4] bg-zinc-800 relative overflow-hidden">
-                        <img
-                          src={doc.thumbnail}
-                          alt={doc.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-medium text-white text-sm truncate group-hover:text-blue-400 transition-colors">
-                          {doc.title}
-                        </h3>
-                        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                          <span>{doc.size}</span>
-                          <span>{doc.date}</span>
+              {filteredDocuments.length === 0 ? (
+                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center text-gray-400">
+                  <p className="text-sm">No documents match "{searchQuery}".</p>
+                  <p className="text-xs mt-2">Try a different keyword or clear the search.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {filteredDocuments.map(doc => (
+                    <div
+                      key={doc.id}
+                      className="group cursor-pointer"
+                    >
+                      {/* Dropbox-style Thumbnail */}
+                      <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden hover:border-blue-600 transition-all duration-200 hover:shadow-lg hover:shadow-blue-600/20">
+                        <div className="aspect-[3/4] bg-zinc-800 relative overflow-hidden">
+                          <img
+                            src={doc.thumbnail}
+                            alt={doc.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-medium text-white text-sm truncate group-hover:text-blue-400 transition-colors">
+                            {doc.title}
+                          </h3>
+                          <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                            <span>{doc.size}</span>
+                            <span>{doc.date}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
