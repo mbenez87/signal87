@@ -3,11 +3,14 @@ import {
   BarChart3,
   Bot,
   ChevronRight,
+  CircuitBoard,
   FileText,
   FolderOpen,
   Home,
+  LayoutGrid,
   Lock,
   LogOut,
+  MessageSquare,
   Paperclip,
   ScanSearch,
   Search,
@@ -15,6 +18,7 @@ import {
   Settings,
   Shield,
   Sparkles,
+  User,
   Upload,
   Wand2,
   X,
@@ -49,16 +53,22 @@ export default function Dashboard() {
   const [generationPrompt, setGenerationPrompt] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const sidebarItems = [
+  const primarySidebarItems = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'generate', icon: Wand2, label: 'Generate', highlight: true },
     { id: 'documents', icon: FileText, label: 'Documents' },
-    { id: 'dedupe', icon: ScanSearch, label: 'Duplicate Detector', highlight: true },
+    { id: 'generate', icon: Wand2, label: 'Generate' },
+    { id: 'dedupe', icon: ScanSearch, label: 'Duplicate Detector' },
+    { id: 'analytics', icon: BarChart3, label: 'Analytics' },
+    { id: 'compliance', icon: Shield, label: 'Compliance' },
     { id: 'folders', icon: FolderOpen, label: 'Folders' },
     { id: 'search', icon: Search, label: 'Search' },
-    { id: 'compliance', icon: Shield, label: 'Compliance' },
-    { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'chat', icon: MessageSquare, label: 'Chat' },
+    { id: 'team', icon: User, label: 'Team' },
+  ]
+
+  const secondarySidebarItems = [
+    { id: 'workspace', icon: LayoutGrid, label: 'Workspace' },
+    { id: 'network', icon: CircuitBoard, label: 'Network' },
   ]
 
   const mockDocuments = [
@@ -217,42 +227,67 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black flex">
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
-        <div className="p-4 border-b border-zinc-800">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S87</span>
-            </div>
-            <span className="font-bold text-lg bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              Signal87
-            </span>
-          </div>
+      <aside className="w-[58px] bg-[#030303] border-r border-zinc-900 flex flex-col items-center py-3 gap-3">
+        <div className="w-9 h-9 rounded-md bg-zinc-100 text-black font-bold text-[11px] flex items-center justify-center shadow-[0_0_0_1px_rgba(255,255,255,0.2)]">
+          S87
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {sidebarItems.map((item) => (
+        <div className="w-9 h-px bg-zinc-800" />
+
+        <nav className="flex-1 flex flex-col items-center gap-2">
+          {primarySidebarItems.map((item) => (
             <button
               key={item.id}
+              title={item.label}
+              aria-label={item.label}
+              aria-current={activeTab === item.id ? 'page' : undefined}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                'w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200',
+                'h-8 w-8 rounded-md border transition-all duration-200 flex items-center justify-center',
                 activeTab === item.id
-                  ? item.highlight
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                    : 'bg-zinc-800 text-white'
-                  : 'text-gray-400 hover:bg-zinc-800 hover:text-white',
+                  ? 'bg-zinc-800/90 border-zinc-500 text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80',
               )}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <item.icon className="w-[15px] h-[15px]" />
+            </button>
+          ))}
+
+          <div className="w-9 h-px bg-zinc-800 my-1" />
+
+          {secondarySidebarItems.map((item) => (
+            <button
+              key={item.id}
+              title={item.label}
+              aria-label={item.label}
+              aria-current={activeTab === item.id ? 'page' : undefined}
+              onClick={() => setActiveTab(item.id)}
+              className={cn(
+                'h-8 w-8 rounded-md border transition-all duration-200 flex items-center justify-center',
+                activeTab === item.id
+                  ? 'bg-zinc-800/90 border-zinc-500 text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80',
+              )}
+            >
+              <item.icon className="w-[15px] h-[15px]" />
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-zinc-800">
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-zinc-800 hover:text-white transition-colors">
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            title="Settings"
+            aria-label="Settings"
+            className="h-8 w-8 rounded-md border border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80 flex items-center justify-center transition-all duration-200"
+          >
+            <Settings className="w-[15px] h-[15px]" />
+          </button>
+          <button
+            title="Sign Out"
+            aria-label="Sign Out"
+            className="h-8 w-8 rounded-md border border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80 flex items-center justify-center transition-all duration-200"
+          >
+            <LogOut className="w-[15px] h-[15px]" />
           </button>
         </div>
       </aside>
