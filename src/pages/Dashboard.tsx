@@ -227,8 +227,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black flex">
-      <aside className="w-16 bg-black/95 border-r border-zinc-900 flex flex-col items-center py-3 gap-3">
-        <div className="w-10 h-10 rounded-md bg-zinc-100 text-black font-bold text-sm flex items-center justify-center shadow-[0_0_0_1px_rgba(255,255,255,0.15)]">
+      <aside className="w-[58px] bg-[#030303] border-r border-zinc-900 flex flex-col items-center py-3 gap-3">
+        <div className="w-9 h-9 rounded-md bg-zinc-100 text-black font-bold text-[11px] flex items-center justify-center shadow-[0_0_0_1px_rgba(255,255,255,0.2)]">
           S87
         </div>
 
@@ -239,15 +239,17 @@ export default function Dashboard() {
             <button
               key={item.id}
               title={item.label}
+              aria-label={item.label}
+              aria-current={activeTab === item.id ? 'page' : undefined}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                'h-9 w-9 rounded-md border transition-all duration-200 flex items-center justify-center',
+                'h-8 w-8 rounded-md border transition-all duration-200 flex items-center justify-center',
                 activeTab === item.id
-                  ? 'bg-zinc-800 border-zinc-600 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'
+                  ? 'bg-zinc-800/90 border-zinc-500 text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]'
                   : 'border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80',
               )}
             >
-              <item.icon className="w-4 h-4" />
+              <item.icon className="w-[15px] h-[15px]" />
             </button>
           ))}
 
@@ -257,15 +259,17 @@ export default function Dashboard() {
             <button
               key={item.id}
               title={item.label}
+              aria-label={item.label}
+              aria-current={activeTab === item.id ? 'page' : undefined}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                'h-9 w-9 rounded-md border transition-all duration-200 flex items-center justify-center',
+                'h-8 w-8 rounded-md border transition-all duration-200 flex items-center justify-center',
                 activeTab === item.id
-                  ? 'bg-zinc-800 border-zinc-600 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'
+                  ? 'bg-zinc-800/90 border-zinc-500 text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]'
                   : 'border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80',
               )}
             >
-              <item.icon className="w-4 h-4" />
+              <item.icon className="w-[15px] h-[15px]" />
             </button>
           ))}
         </nav>
@@ -273,15 +277,17 @@ export default function Dashboard() {
         <div className="flex flex-col items-center gap-2">
           <button
             title="Settings"
-            className="h-9 w-9 rounded-md border border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80 flex items-center justify-center transition-all duration-200"
+            aria-label="Settings"
+            className="h-8 w-8 rounded-md border border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80 flex items-center justify-center transition-all duration-200"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-[15px] h-[15px]" />
           </button>
           <button
             title="Sign Out"
-            className="h-9 w-9 rounded-md border border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80 flex items-center justify-center transition-all duration-200"
+            aria-label="Sign Out"
+            className="h-8 w-8 rounded-md border border-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/80 flex items-center justify-center transition-all duration-200"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-[15px] h-[15px]" />
           </button>
         </div>
       </aside>
